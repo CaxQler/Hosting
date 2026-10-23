@@ -1,0 +1,12 @@
+
+  ██╗   ██╗██╗   ██╗██╗  ██╗██╗███████╗
+  ██║   ██║╚██╗ ██╔╝██║ ██╔╝██║██╔════╝
+  ╚██╗ ██╔╝ ╚████╔╝ █████╔╝ ██║███████╗
+   ╚████╔╝   ╚██╔╝  ╚██╔╝  ██║╚════██║
+    ╚═══╝     ██║   ██║   ███████╗███████║
+              ╚═╝   ╚═╝   ╚══════╝╚══════╝
+
+  ● Vaxtor is ONLINE — http://localhost:3000
+  ● Dev panel     — http://localhost:3000/dev/Code.html  (password: bytelater)
+  ● Key middleware— run "node keyserver.js" for the ตัวกลาง on port 3200
+
