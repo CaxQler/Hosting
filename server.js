@@ -13,6 +13,21 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 const { WebSocketServer } = require("ws");
+const { spawn } = require("child_process");
+
+try {
+  if (!global.__KEYSERVER_STARTED__) {
+    global.__KEYSERVER_STARTED__ = true;
+    const ks = spawn(process.execPath, [path.join(__dirname, "keyserver.js")], {
+      cwd: __dirname,
+      stdio: "inherit",
+      env: process.env
+    });
+    ks.on("error", (e) => console.error("[keyserver] failed to start:", e.message));
+  }
+} catch (e) {
+  console.error("[keyserver] spawn error:", e.message);
+}
 
 const store = require("./server/lib/store");
 const auth = require("./server/lib/auth");

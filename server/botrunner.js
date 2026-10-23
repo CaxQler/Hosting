@@ -224,16 +224,46 @@ function installDeps(bot, dir, plan) {
     if (plan.language === "python") {
       const hasReq = fs.existsSync(path.join(dir, "requirements.txt"));
       if (!hasReq) return resolve(true);
-      log(bot.id, "Installing dependencies: pip install -r requirements.txt ...", "install");
       const py = isWin ? "python" : "python3";
-      const p = spawn(py, ["-m", "pip", "install", "-r", "requirements.txt", "--disable-pip-version-check", "-q"], { cwd: dir, env: buildEnv(bot) });
-      p.stdout.on("data", (d) => log(bot.id, d.toString(), "pip"));
-      p.stderr.on("data", (d) => log(bot.id, d.toString(), "pip"));
-      p.on("close", (code) => {
-        if (code === 0) { log(bot.id, "Dependencies installed.", "ok"); resolve(true); }
-        else { log(bot.id, `pip install exited with code ${code}`, "err"); resolve(code === 0); }
+      const venvDir = path.join(dir, ".venv");
+      const venvPy = isWin ? path.join(venvDir, "Scripts", "python.exe") : path.join(venvDir, "bin", "python");
+      const venvPip = isWin ? path.join(venvDir, "Scripts", "pip.exe") : path.join(venvDir, "bin", "pip");
+      const hasVenv = fs.existsSync(venvPy);
+      const run = (cmd, args) => new Promise((res) => {
+        log(bot.id, `> ${cmd} ${args.join(" ")}`, "install");
+        const p = spawn(cmd, args, { cwd: dir, env: buildEnv(bot) });
+        p.stdout.on("data", (d) => log(bot.id, d.toString(), "install"));
+        p.stderr.on("data", (d) => log(bot.id, d.toString(), "install"));
+        p.on("close", (code) => res(code === 0));
+        p.on("error", (e) => { log(bot.id, e.message, "err"); res(false); });
       });
-      p.on("error", (e) => { log(bot.id, "pip install failed: " + e.message, "err"); resolve(false); });
+      (async () => {
+        if (!hasVenv) {
+          log(bot.id, "Creating virtual environment...", "install");
+          const okVenv = await run(py, ["-m", "venv", ".venv"]);
+          if (!okVenv) {
+            log(bot.id, "venv creation failed, trying pip with --break-system-packages...", "install");
+            const p = spawn(py, ["-m", "pip", "install", "-r", "requirements.txt", "--disable-pip-version-check", "--break-system-packages", "-q"], { cwd: dir, env: buildEnv(bot) });
+            p.stdout.on("data", (d) => log(bot.id, d.toString(), "pip"));
+            p.stderr.on("data", (d) => log(bot.id, d.toString(), "pip"));
+            p.on("close", (code) => {
+              if (code === 0) { log(bot.id, "Dependencies installed.", "ok"); resolve(true); }
+              else { log(bot.id, `pip install exited with code ${code}`, "err"); resolve(false); }
+            });
+            p.on("error", (e) => { log(bot.id, "pip install failed: " + e.message, "err"); resolve(false); });
+            return;
+          }
+        }
+        log(bot.id, "Installing dependencies: pip install -r requirements.txt ...", "install");
+        const p = spawn(venvPy, ["-m", "pip", "install", "-r", "requirements.txt", "--disable-pip-version-check", "-q"], { cwd: dir, env: buildEnv(bot) });
+        p.stdout.on("data", (d) => log(bot.id, d.toString(), "pip"));
+        p.stderr.on("data", (d) => log(bot.id, d.toString(), "pip"));
+        p.on("close", (code) => {
+          if (code === 0) { log(bot.id, "Dependencies installed.", "ok"); resolve(true); }
+          else { log(bot.id, `pip install exited with code ${code}`, "err"); resolve(false); }
+        });
+        p.on("error", (e) => { log(bot.id, "pip install failed: " + e.message, "err"); resolve(false); });
+      })();
       return;
     }
     resolve(false);
@@ -267,13 +297,22 @@ async function start(bot) {
     return { ok: false, error: "Dependency installation failed. Check the console." };
   }
 
-  log(bot.id, `Starting: ${plan.command} ${plan.args.join(" ")}`, "sys");
-  const proc = spawn(plan.command, plan.args, {
+  let runCmd = plan.command;
+  let runArgs = plan.args.slice();
+  if (plan.language === "python") {
+    const venvPy = isWin ? path.join(dir, ".venv", "Scripts", "python.exe") : path.join(dir, ".venv", "bin", "python");
+    if (fs.existsSync(venvPy)) {
+      runCmd = venvPy;
+    }
+  }
+
+  log(bot.id, `Starting: ${runCmd} ${runArgs.join(" ")}`, "sys");
+  const proc = spawn(runCmd, runArgs, {
     cwd: dir,
     env: buildEnv(bot),
     // shell is only needed for .cmd/.bat launchers (npm.cmd). Using it for a
     // path like "C:\Program Files\nodejs\node.exe" would break on the space.
-    shell: isWin && /\.(cmd|bat)$/i.test(String(plan.command)),
+    shell: isWin && /\.(cmd|bat)$/i.test(String(runCmd)),
     detached: false,
     windowsHide: true,
     stdio: ['pipe', 'pipe', 'pipe'],
