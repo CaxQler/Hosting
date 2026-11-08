@@ -1,0 +1,9 @@
+node_modules/
+bots/
+data/db.json
+data/*.tmp
+logs/
+*.log
+render-update.zip
+.env
+"
