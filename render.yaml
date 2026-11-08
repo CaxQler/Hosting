@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: vaxtor-hosting
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: APP_URL
+        sync: false
+      - key: KEYSERVER_PORT
+        value: "3200"
+    disk:
+      name: vaxtor-data
+      mountPath: /opt/render/project/src
+      sizeGB: 1
+"

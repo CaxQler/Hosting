@@ -1,0 +1,10 @@
+node_modules
+.git
+bots
+data/db.json
+data/*.tmp
+logs
+*.log
+screenshots
+render-update.zip
+"

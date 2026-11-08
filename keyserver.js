@@ -194,7 +194,7 @@ const server = http.createServer(async (req, res) => {
   return send(res, 404, { ok: false, error: "Unknown route." });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, process.env.HOST || "0.0.0.0", () => {
   console.log("──────────────────────────────────────────────");
   console.log("  VAXTOR KEY MIDDLEWARE (ตัวกลาง)  ●  ONLINE");
   console.log(`  http://localhost:${PORT}`);

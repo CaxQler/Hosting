@@ -990,7 +990,7 @@ setInterval(() => {
 /* ---------------- boot ---------------- */
 
 store.load();
-server.listen(PORT, () => {
+server.listen(PORT, process.env.HOST || "0.0.0.0", () => {
   console.log("");
   console.log("  ██╗   ██╗██╗   ██╗██╗  ██╗██╗███████╗");
   console.log("  ██║   ██║╚██╗ ██╔╝██║ ██╔╝██║██╔════╝");
