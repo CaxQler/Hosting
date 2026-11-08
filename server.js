@@ -43,7 +43,10 @@ const ROOT = __dirname;
 /* ---------------- config bootstrap ---------------- */
 
 function loadConfig() {
-  const file = path.join(store.DATA_DIR, "config.json");
+  const fs = require("fs");
+  const dir = store.DATA_DIR;
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, "config.json");
   let cfg = {};
   if (fs.existsSync(file)) { try { cfg = JSON.parse(fs.readFileSync(file, "utf8")); } catch (_) {} }
   let created = false;
